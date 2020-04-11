@@ -7,6 +7,6 @@ It’s a self-reporting and self-checking App letting the users:
 
 How could we do it?
 - The proximity are estimated by Bluetooth signal strength (RSSN). 
-- The user’s privacy and anonymity are protected by differential privacy mechanisms (bloom filter based)
+- The user’s privacy and anonymity are protected by differential privacy mechanisms (eg. bloom filter based)
 
 An unique feature of this app is that even if you have never installed this app before, once installed it can still show you immediately if you have elevated risks.
