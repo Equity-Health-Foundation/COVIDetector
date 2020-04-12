@@ -9,7 +9,7 @@ How could we do it?
 - The proximity are estimated by Bluetooth signal strength (RSSN). 
 - The user’s privacy and anonymity are protected by differential privacy mechanisms (eg. bloom filter based)
 
-An unique feature of this app is that even if you have never installed this app before, once installed it can still show you immediately if you have elevated risks.
+An unique feature of this app is that _even if you have never installed this app before, once installed it can still show you immediately if you have elevated risks_.
 
 Other privacy features are:
 - **NO data will ever been uploaded to the cloud platform or shared with other users if a user is just checking his/her risk.** A user's checking on his/her risk level will **NOT** result in the exposure of his/her bluetooth ids to the platform or other users.
