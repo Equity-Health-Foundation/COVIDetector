@@ -7,8 +7,7 @@ A data exploration tool to visualize the Electronic Health Records (EHR) of each
 #### How to use the tools to do health data visualization
 1. load all CSVs in the dataset (downloaded from DREAM challenge site), build and save the featuretools EntitySet with feature_engineering.py
 ```
-feature_engineering.py -i release_07-06-2020/training -e train -o
- train.parquet -d -n 4
+feature_engineering.py -i release_07-06-2020/training -e train -o train.parquet -d -n 4
 Done Loading raw data csv files as Dask DataFrames ...
 ⠇ Bulding EntitySet ... 2020-07-26 21:26:51,682 featuretools.entityset - WARNING    index visit_occurrence_id not found in dataframe, creating new integer column
 Done Bulding EntitySet ...
@@ -38,6 +37,10 @@ feature_engineering.py -p eval.dask.parquet -m test_fm -d -n 12
 #### Appendix
 Full function of feature_engineering.py
 ```
+feature_engineering.py -h
+usage: feature_engineering.py [-h] [-i INPUT_DIR] [-e ENTITYSET_ID] [-o OUTPUT_ENTITYSET] [-p INPUT_ES_DIR] [-f FEATURE_FILE] [-m FEATURE_MATRIX_PATH] [-d] [-n N_WORKERS]
+                              [-t THREADS_PER_WORKER]
+                              
 This is a data processing and feature enginering tool for the DREAM-COVID challenge dataset
 
 optional arguments:
