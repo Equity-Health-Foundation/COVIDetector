@@ -68,8 +68,12 @@ def input_triggers_spinner(patient_id):
 def update_patient_info(patient_id):
     df_person = entityset['person'].df
     df = df_person[df_person['person_id'] == patient_id].compute()
+    goldstandard = entityset['goldstandard'].df
+    status = goldstandard[goldstandard.person_id == patient_id].status.compute()
+    df['status'] = status
+    df = df[['status', 'birth_datetime', 'gender_source_value']]
     table = dbc.Table.from_dataframe(df, striped=True, bordered=False, borderless=True,
-                                    hover=True, size='sm')
+                                     hover=True, size='sm')
     return table
 
 
