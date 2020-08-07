@@ -627,8 +627,15 @@ def entityset_to_parquet(entityset, output, partition_on=None):
 
 
 def gen_feature_matrix(entityset, features_only=False, feature_matrix_encode=False,
-                       outputdir=None, out_feature_matrix_filename=None,
-                       saved_features=None, saved_encoded_features=None):
+                       saved_features=None):
+    '''A function compute and return (feature_matrix, feature_defs) from an featuretools EntitySet
+
+    entityset: the EntitySet to compute features from
+    features_only: only return feature_defs, do not actually compute the feature_matrix
+    feature_matrix_encode: whether return encoded feature_matrix (Categorical variable one-hot)
+    saved_features: load a pre defined feature file and compute feature_matrix based on it
+    '''
+
     if 'goldstandard' in entityset.entity_dict.keys():
         goldstandard_exist = True
         goldstandard_id = 'goldstandard'
@@ -674,7 +681,7 @@ def gen_feature_matrix(entityset, features_only=False, feature_matrix_encode=Fal
     #     agg_primitives = agg_primitives_dask
 
     # build features
-    if saved_features is None and saved_encoded_features is None:
+    if saved_features is None:
         with yaspin(color="yellow") as spinner:
             spinner.write("No features definition file specified, calculating feature matrix from ground zero ... ")
             feature_defs = ft.dfs(entityset=entityset, target_entity="person",
@@ -693,81 +700,38 @@ def gen_feature_matrix(entityset, features_only=False, feature_matrix_encode=Fal
 
             tic = time.perf_counter()
             feature_matrix = ft.calculate_feature_matrix(feature_defs, entityset)
-            # set_trace()
-            try:
+            if isinstance(entityset.entities[0].df, dd.DataFrame):
                 feature_matrix = feature_matrix.compute()
-            except:
-                pass
             toc = time.perf_counter()
             spinner.write(f"> feature matrix calculate completed in {toc - tic:0.4f} seconds")
-            # set_trace()
             if feature_matrix_encode:
                 feature_matrix_enc, features_enc = ft.encode_features(feature_matrix, feature_defs)
                 spinner.write("> generated {} encoded features and the feature matrix".format(len(features_enc)))
-
-            if outputdir is not None:
-                ft.save_features(feature_defs, os.path.join(outputdir, "feature_defs.json"))
-                spinner.write("> saved features to definition file {}".format("feature_defs.json"))
-
-                if feature_matrix_encode:
-                    ft.save_features(features_enc, os.path.join(outputdir, "features_enc.json"))
-                    spinner.write("> saved encoded features to definition file {}".format("feature_enc.json"))
             spinner.ok("Done")
     else:
-        if saved_features is None:
-            with yaspin(color="yellow") as spinner:
-                spinner.write("Using saved encoded features from {} ... ".format(saved_encoded_features))
-                features_enc = ft.load_features(saved_encoded_features)
-                spinner.write("> {} encoded features loaded from {}".format(len(features_enc), saved_encoded_features))
-                tic = time.perf_counter()
-                if feature_matrix_encode:
-                    feature_matrix_enc = ft.calculate_feature_matrix(features_enc, entityset)
-                try:
-                    feature_matrix_enc = feature_matrix_enc.compute()
-                except:
-                    pass
-                toc = time.perf_counter()
-                spinner.write(f"> encoded feature matrix calculate completed in {toc - tic:0.4f} seconds")
-                spinner.ok("Done")
-        else:
-            with yaspin(color="yellow") as spinner:
-                spinner.write("Using saved features from {} ... ".format(saved_encoded_features))
-                feature_defs = ft.load_features(saved_features)
-                spinner.write("> {} features loaded from {}".format(len(feature_defs), saved_features))
+        with yaspin(color="yellow") as spinner:
+            spinner.write("Using saved features from {} ... ".format(saved_encoded_features))
+            feature_defs = ft.load_features(saved_features)
+            spinner.write("> {} features loaded from {}".format(len(feature_defs), saved_features))
 
-                tic = time.perf_counter()
-                feature_matrix = ft.calculate_feature_matrix(feature_defs, entityset)
-                try:
-                    feature_matrix = feature_matrix.compute()
-                except:
-                    pass
-                toc = time.perf_counter()
-                spinner.write(f"> feature matrix calculate complete in {toc - tic:0.4f} seconds")
+            tic = time.perf_counter()
+            feature_matrix = ft.calculate_feature_matrix(feature_defs, entityset)
+            if isinstance(entityset.entities[0].df, dd.DataFrame):
+                feature_matrix = feature_matrix.compute()
+            toc = time.perf_counter()
+            spinner.write(f"> feature matrix calculate complete in {toc - tic:0.4f} seconds")
+            spinner.ok("Done")
 
-                if feature_matrix_encode:
-                    tic = time.perf_counter()
-                    feature_matrix_enc, features_enc = ft.encode_features(feature_matrix, feature_defs)
-                    toc = time.perf_counter()
-                    spinner.write(f"> encoded feature matrix calculate completed in {toc - tic:0.4f} seconds")
-                spinner.ok("Done")
     if goldstandard_exist:
-        try:
+        if isinstance(entityset.entities[0].df, dd.DataFrame):
             goldstandard = entityset['goldstandard'].df.compute()
-        except:
+        else:
             goldstandard = entityset['goldstandard'].df
     if feature_matrix_encode:
         feature_matrix = feature_matrix_enc
     if goldstandard_exist:
-        # set_trace()
-        # goldstandard.set_index('person_id')
         feature_matrix = feature_matrix.merge(goldstandard, on='person_id', how='right')
 
-    if out_feature_matrix_filename is not None:
-        out_feature_matrix_file_path = os.path.join(outputdir, out_feature_matrix_filename)
-        with yaspin(color="yellow") as spinner:
-            spinner.write("Saving feature matrix to {} ... ".format(out_feature_matrix_file_path))
-            feature_matrix.to_csv(out_feature_matrix_file_path, index=True)
-            spinner.ok("Done")
     return feature_matrix, feature_defs
 
 
