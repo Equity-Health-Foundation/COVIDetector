@@ -8,7 +8,7 @@ import os
 import time
 # from pathlib import Path
 from yaspin import yaspin
-from dask.distributed import Client
+from dask.distributed import Client, LocalCluster
 import dask.dataframe as dd
 import dask.array as array
 import argparse
@@ -19,12 +19,9 @@ import argparse
 # from pdb import set_trace
 
 
-def start_dask(n_workers=4, threads_per_worker=1):
-    try:
-        client.close()
-    except:
-        pass
-    client = Client(n_workers=n_workers, threads_per_worker=threads_per_worker)
+def start_dask(n_workers=4):#, threads_per_worker=1):
+    cluster = LocalCluster(processes=True)#host='127.0.0.1:8786', n_workers=n_workers, threads_per_worker=threads_per_worker)
+    client = Client(cluster)
     return client
 
 
