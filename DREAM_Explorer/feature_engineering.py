@@ -19,8 +19,14 @@ import argparse
 # from pdb import set_trace
 
 
-def start_dask(n_workers=4, processes=False):#, threads_per_worker=1):
-    cluster = LocalCluster(n_workers=n_workers, processes=processes)#host='127.0.0.1:8786', threads_per_worker=threads_per_worker)
+def start_dask(processes=True, n_workers=4):#, threads_per_worker=1):
+    '''
+    processes: {True use multi-processes, False use multi-threads
+    multi-processes is generally faster at a cost of hihger memory usage,
+    but when memory is too full it can cause multiple workers been killed
+    and much longer overall computing time}
+    '''
+    cluster = LocalCluster(processes=processes, n_workers=n_workers)#host='127.0.0.1:8786', threads_per_worker=threads_per_worker)
     client = Client(cluster)
     return client
 
