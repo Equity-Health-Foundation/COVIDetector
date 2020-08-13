@@ -43,31 +43,35 @@ def gen_feature_matrix(entityset, features_only=False, feature_matrix_encode=Fal
     #         ignore_variables[entity.id] = ['partition']
 
     ##CAUTION when the entityset is backed by Dask dataframes, only limited set of primitives are supported
-    # agg_primitives_all=['avg_time_between', 'count', 'all', 'entropy', 'last', 'num_unique', #'n_most_common',
+    # agg_primitives_all=['avg_time_between', 'count', 'all', 'entropy', 'last', 'num_unique', 'n_most_common',
     #             'min', 'std', 'median', 'mean', 'percent_true', 'trend', 'sum', 'time_since_last', 'any',
     #             'num_true', 'time_since_first', 'first', 'max', 'mode', 'skew']
     # agg_primitives_dask=['count', 'all', 'num_unique', #'n_most_common',
     #               'min', 'std', 'mean', 'percent_true', 'sum', 'any',
     #               'num_true', 'max']
 
+    ## define features per entity(table)
     agg_primitives = ['mean', 'max', 'min', 'std', 'last', 'skew', 'time_since_last'] # 'trend' # trend takes extremely long time to compute
+    include_variables = {'measurement': ['measurement_datetime', 'value_as_number', 'measurement_concept_id'],
+                         'observation':['observation_concept_id', 'observation_datetime', 'value_as_number']}
+    agg_primitives_device_exposure = ['count', 'avg_time_between', 'time_since_first']
+    include_entities_device_exposure = ['device_exposure']
+
     trans_primitives = ['age']
     groupby_trans_primitives = []
-    include_variables = {'measurement': ['measurement_datetime', 'value_as_number',
-                                         'measurement_concept_id'],
-                         'person': ['birth_datetime']
-                        }
     include_entities = ['person']
     primitive_options = {tuple(trans_primitives): {'include_entities': include_entities},
-                         tuple(agg_primitives): {'include_variables': include_variables}
+                         tuple(agg_primitives): {'include_variables': include_variables},
+                         tuple(agg_primitives_device_exposure): {'include_entities': include_entities_device_exposure},
                         }
-    ignore_entities = [goldstandard_id, 'condition_occurrence', 'device_exposure', 'drug_exposure',
-                       'observation', 'observation_period', 'procedure_occurrence', 'visit_occurrence']
+    ignore_entities = [goldstandard_id, 'condition_occurrence', 'drug_exposure',
+                       'observation_period', 'procedure_occurrence', 'visit_occurrence']
     ignore_variables = {}
     where_primitives = agg_primitives
     entityset['measurement']['measurement_concept_id'].interesting_values = entityset[
                                                         'measurement'].df['measurement_concept_id'].unique()
-
+    entityset['observation']['observation_concept_id'].interesting_values = entityset[
+                                                        'observation'].df['observation_concept_id'].unique()
     # if isinstance(entityset.entities[0].df, pandas.DataFrame):
     #     agg_primitives = agg_primitives_all
     # else:
@@ -79,7 +83,7 @@ def gen_feature_matrix(entityset, features_only=False, feature_matrix_encode=Fal
             spinner.write("No features definition file specified, calculating feature matrix from ground zero ... ")
             feature_defs = ft.dfs(entityset=entityset, target_entity="person",
                                   features_only=True,
-                                  agg_primitives=agg_primitives,
+                                  agg_primitives=agg_primitives+agg_primitives_device_exposure,
                                   trans_primitives=trans_primitives,
                                   groupby_trans_primitives=groupby_trans_primitives,
                                   primitive_options=primitive_options,
